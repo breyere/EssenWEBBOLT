@@ -1,9 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Lock, Unlock, Shield } from 'lucide-react';
 
 interface SecurityLockProps {
   onUnlock: () => void;
   isDarkMode: boolean;
+}
+
+interface RainParticle {
+  x: number;
+  y: number;
+  char: string;
+  speed: number;
+  alpha: number;
+  startY: number;
 }
 
 const SecurityLock: React.FC<SecurityLockProps> = ({ onUnlock, isDarkMode }) => {
@@ -12,7 +21,21 @@ const SecurityLock: React.FC<SecurityLockProps> = ({ onUnlock, isDarkMode }) => 
   const [showError, setShowError] = useState(false);
   const [currentMousePos, setCurrentMousePos] = useState({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
-  
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particlesRef = useRef<RainParticle[]>([]);
+
+  const createParticle = useCallback((x: number, y: number): RainParticle => {
+    const characters = '01';
+    return {
+      x,
+      y,
+      char: characters.charAt(Math.floor(Math.random() * characters.length)),
+      speed: 2,
+      alpha: 1,
+      startY: y,
+    };
+  }, []);
+
   // The correct pattern from your image: starts from top-left (3), goes to center (5), then follows the drawn path
   const correctPattern = [3, 2, 5, 4, 1, 7, 8, 9, 6]; // Based on the blue line in your image
 
@@ -29,19 +52,89 @@ const SecurityLock: React.FC<SecurityLockProps> = ({ onUnlock, isDarkMode }) => 
   ];
 
   useEffect(() => {
+    const handleInteractionMove = (clientX: number, clientY: number) => {
+      if (isDrawing) {
+        if (svgRef.current) {
+          const rect = svgRef.current.getBoundingClientRect();
+          setCurrentMousePos({
+            x: clientX - rect.left,
+            y: clientY - rect.top,
+          });
+        }
+
+        particlesRef.current.push(createParticle(clientX, clientY));
+      }
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
-      if (isDrawing && svgRef.current) {
-        const rect = svgRef.current.getBoundingClientRect();
-        setCurrentMousePos({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
-        });
+      handleInteractionMove(e.clientX, e.clientY);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY);
       }
     };
 
     document.addEventListener('mousemove', handleMouseMove);
-    return () => document.removeEventListener('mousemove', handleMouseMove);
-  }, [isDrawing]);
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [isDrawing, createParticle]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const setCanvasDimensions = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    setCanvasDimensions();
+
+    window.addEventListener('resize', setCanvasDimensions);
+
+    let animationFrameId: number;
+
+    const animate = () => {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const maxTravelDistance = 150;
+
+      for (let i = particlesRef.current.length - 1; i >= 0; i--) {
+        const p = particlesRef.current[i];
+        const travelDistance = p.y - p.startY;
+
+        if (travelDistance > maxTravelDistance) {
+          particlesRef.current.splice(i, 1);
+          continue;
+        }
+
+        p.alpha = 1 - (travelDistance / maxTravelDistance);
+
+        ctx.fillStyle = `rgba(0, 255, 0, ${p.alpha})`;
+        ctx.font = '16px monospace';
+        ctx.fillText(p.char, p.x, p.y);
+
+        p.y += p.speed;
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', setCanvasDimensions);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
 
   const handleMouseDown = (dotId: number) => {
     setIsDrawing(true);
@@ -84,7 +177,6 @@ const SecurityLock: React.FC<SecurityLockProps> = ({ onUnlock, isDarkMode }) => 
       d += ` L ${pathDots[i].x} ${pathDots[i].y}`;
     }
     
-    // Add line to current mouse position if drawing
     if (isDrawing && pattern.length > 0) {
       d += ` L ${currentMousePos.x} ${currentMousePos.y}`;
     }
@@ -96,26 +188,11 @@ const SecurityLock: React.FC<SecurityLockProps> = ({ onUnlock, isDarkMode }) => 
 
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-10" />
       {/* Background with subtle gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900"></div>
       
-      {/* Animated background particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-blue-500 rounded-full opacity-20 animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 2}s`
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="relative z-10 text-center">
+      <div className="relative z-20 text-center">
         {/* Header Section */}
         <div className="mb-12">
           <div className="flex items-center justify-center mb-6">
@@ -141,6 +218,20 @@ const SecurityLock: React.FC<SecurityLockProps> = ({ onUnlock, isDarkMode }) => 
             className="mx-auto"
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onTouchEnd={handleMouseUp}
+            onTouchCancel={handleMouseUp}
+            onTouchMove={(e) => {
+              if (isDrawing && e.touches.length > 0) {
+                const touch = e.touches[0];
+                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (element) {
+                  const dotId = element.getAttribute('data-dot-id');
+                  if (dotId) {
+                    handleMouseEnter(parseInt(dotId, 10));
+                  }
+                }
+              }
+            }}
           >
             {/* Grid background lines */}
             <defs>
@@ -157,7 +248,7 @@ const SecurityLock: React.FC<SecurityLockProps> = ({ onUnlock, isDarkMode }) => 
             {pattern.length > 1 && (
               <path
                 d={getPathD()}
-                stroke={showError ? '#ef4444' : isCorrectPattern ? '#10b981' : '#3b82f6'}
+                stroke={showError ? '#ef4444' : isCorrectPattern ? '#10b981' : '#22c55e'}
                 strokeWidth="4"
                 fill="none"
                 strokeLinecap="round"
@@ -194,6 +285,7 @@ const SecurityLock: React.FC<SecurityLockProps> = ({ onUnlock, isDarkMode }) => 
                   
                   {/* Main dot outer ring */}
                   <circle
+                    data-dot-id={dot.id}
                     cx={dot.x}
                     cy={dot.y}
                     r="20"
@@ -208,6 +300,7 @@ const SecurityLock: React.FC<SecurityLockProps> = ({ onUnlock, isDarkMode }) => 
                     }`}
                     strokeWidth="2"
                     onMouseDown={() => handleMouseDown(dot.id)}
+                    onTouchStart={() => handleMouseDown(dot.id)}
                     onMouseEnter={() => handleMouseEnter(dot.id)}
                     style={{
                       filter: isActive ? 'url(#glow)' : 'none'
