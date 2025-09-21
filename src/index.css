@@ -1,0 +1,373 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --gyro-x: 0deg;
+  --gyro-y: 0deg;
+  --light-x: 50%;
+  --light-y: 50%;
+}
+
+* {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Liquid Glass Base Styles */
+.liquid-glass {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.liquid-glass::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.4) 50%, 
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Glass Orb Effects */
+.glass-orb {
+  position: relative;
+  backdrop-filter: blur(15px) saturate(120%);
+  -webkit-backdrop-filter: blur(15px) saturate(120%);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.glass-orb::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.3),
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.05)
+  );
+  border-radius: inherit;
+  z-index: -1;
+}
+
+.glass-orb:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* 3D Glass Pebble */
+.glass-pebble {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.glass-pebble:hover {
+  transform: rotateX(var(--gyro-y)) rotateY(var(--gyro-x)) translateZ(10px);
+}
+
+/* Profile Pebble Animation */
+.profile-pebble {
+  animation: float 6s ease-in-out infinite;
+}
+
+.profile-pebble:nth-child(odd) {
+  animation-delay: -2s;
+}
+
+.profile-pebble:nth-child(even) {
+  animation-delay: -4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Chef Badge Glow */
+.chef-badge {
+  animation: chefGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes chefGlow {
+  from { box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+  to { box-shadow: 0 0 20px rgba(245, 158, 11, 0.8), 0 0 30px rgba(245, 158, 11, 0.3); }
+}
+
+/* Meal Card Animation */
+.meal-card {
+  animation: slideInUp 0.6s cubic-bezier(0.23, 1, 0.320, 1) forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+@keyframes slideInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Glass Button Effects */
+.glass-button {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.glass-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.05)
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: inherit;
+}
+
+.glass-button:hover::before {
+  opacity: 1;
+}
+
+.glass-button:active {
+  transform: scale(0.98);
+}
+
+/* Vote Button Ripple Effect */
+.vote-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.vote-button:active::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+  to {
+    width: 100px;
+    height: 100px;
+    opacity: 0;
+  }
+}
+
+/* Comment Orb Refraction */
+.comment-orb {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+/* Liquid Trail for Pattern Lock */
+.liquid-trail {
+  animation: liquidFlow 2s ease-in-out infinite;
+}
+
+@keyframes liquidFlow {
+  0%, 100% {
+    stroke-dasharray: 20, 0;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 10, 10;
+    stroke-dashoffset: -10;
+  }
+}
+
+/* Pattern Dot Glow */
+.pattern-dot {
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.3));
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pattern-dot:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.6));
+}
+
+/* Generate Button Liquid Effect */
+.generate-button {
+  position: relative;
+  overflow: hidden;
+  background-size: 200% 100%;
+  animation: liquidShimmer 3s ease-in-out infinite;
+}
+
+@keyframes liquidShimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Navigation Button Physics */
+.nav-button {
+  transform-style: preserve-3d;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.nav-button:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.nav-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Preference Tag Liquid Animation */
+.preference-tag {
+  position: relative;
+  overflow: hidden;
+  background-size: 200% 100%;
+  animation: preferenceFlow 4s ease-in-out infinite;
+}
+
+@keyframes preferenceFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Error Animation */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Gyroscope Responsive Lighting */
+@media (orientation: landscape) {
+  .liquid-glass {
+    transform: perspective(1000px) 
+               rotateX(calc(var(--gyro-y) * 0.1)) 
+               rotateY(calc(var(--gyro-x) * 0.1));
+  }
+}
+
+/* Dark Mode Obsidian Effects */
+.dark .liquid-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.8) 0%,
+    rgba(15, 23, 42, 0.6) 50%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* OLED Black Optimization */
+@media (prefers-color-scheme: dark) {
+  .bg-black {
+    background: #000000;
+  }
+}
+
+/* Physics-based Micro-interactions */
+.liquid-element {
+  will-change: transform;
+  backface-visibility: hidden;
+  transform-origin: center;
+}
+
+/* Responsive Design Breakpoints */
+@media (max-width: 768px) {
+  .liquid-glass {
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+  }
+  
+  .glass-pebble {
+    transform: scale(0.9);
+  }
+}
+
+@media (max-width: 640px) {
+  .meal-card {
+    margin: 0 -1rem;
+  }
+  
+  .glass-orb {
+    transform: scale(0.8);
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .meal-card,
+  .profile-pebble,
+  .liquid-trail,
+  .generate-button {
+    animation: none;
+  }
+  
+  .glass-pebble:hover {
+    transform: translateZ(5px);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid #000;
+  }
+  
+  .dark .liquid-glass {
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #fff;
+  }
+}
